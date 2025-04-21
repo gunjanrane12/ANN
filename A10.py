@@ -1,43 +1,79 @@
 import numpy as np
+import tensorflow as tf
+from tensorflow.keras import layers, models
+import matplotlib.pyplot as plt
+import random
 
-class HopfieldNetwork:
-    def __init__(self, size):
-        self.size = size
-        self.weights = np.zeros((size, size))
 
-    def train(self, patterns):
-        for p in patterns:
-            p = np.array(p).reshape(self.size, 1)
-            self.weights += p @ p.T
-        np.fill_diagonal(self.weights, 0)
+# Generate synthetic data: images with a white square on black background
+def generate_data(num_samples=1000, img_size=64):
+    X = []
+    y_class = []  # classification label (always 1 here for "object present")
+    y_bbox = []  # bounding box [x, y, width, height]
 
-    def recall(self, pattern, steps=10):
-        pattern = np.array(pattern).copy()
-        for _ in range(steps):
-            pattern = np.sign(self.weights @ pattern)
-            pattern[pattern == 0] = 1
-        return pattern
+    for _ in range(num_samples):
+        img = np.zeros((img_size, img_size), dtype=np.uint8)
+        size = random.randint(10, 20)
+        x = random.randint(0, img_size - size)
+        y = random.randint(0, img_size - size)
+        img[y:y + size, x:x + size] = 255
 
-def bin_to_bipolar(vec):
-    return np.array([1 if x == 1 else -1 for x in vec])
+        X.append(img)
+        y_class.append(1)  # object exists
+        y_bbox.append([x / img_size, y / img_size, size / img_size, size / img_size])  # normalized
 
-def bipolar_to_bin(vec):
-    return [1 if x >= 0 else 0 for x in vec]
+    X = np.array(X).reshape(-1, img_size, img_size, 1) / 255.0
+    y_class = np.array(y_class)
+    y_bbox = np.array(y_bbox)
+    return X, y_class, y_bbox
 
-# ✅ Use ONLY TWO patterns to stay under capacity
-patterns = [
-    bin_to_bipolar([1, 0, 1, 0]),
-    bin_to_bipolar([0, 1, 0, 1])
-]
 
-net = HopfieldNetwork(size=4)
-net.train(patterns)
+# Create training data
+X, y_class, y_bbox = generate_data(1000)
+X_test, y_class_test, y_bbox_test = generate_data(100)
 
-# Noisy input: missing 3rd bit from [1, 0, 1, 0]
-test_input = bin_to_bipolar([1, 0, 0, 0])
-recalled = net.recall(test_input)
+# Build a simple CNN model
+inputs = layers.Input(shape=(64, 64, 1))
+x = layers.Conv2D(16, (3, 3), activation='relu')(inputs)
+x = layers.MaxPooling2D()(x)
+x = layers.Conv2D(32, (3, 3), activation='relu')(x)
+x = layers.MaxPooling2D()(x)
+x = layers.Flatten()(x)
+x = layers.Dense(64, activation='relu')(x)
 
-print("Original input (noisy):", bipolar_to_bin(test_input))
-print("Recalled pattern:       ", bipolar_to_bin(recalled))
-print("\nWeight matrix:")
-print(np.round(net.weights, 2))
+# Two heads: one for classification, one for bounding box
+output_class = layers.Dense(1, activation='sigmoid', name='class_output')(x)
+output_bbox = layers.Dense(4, activation='sigmoid', name='bbox_output')(x)
+
+model = models.Model(inputs=inputs, outputs=[output_class, output_bbox])
+model.compile(optimizer='adam',
+              loss={'class_output': 'binary_crossentropy', 'bbox_output': 'mse'},
+              metrics={'class_output': 'accuracy'})
+
+# Train model
+model.fit(X, {'class_output': y_class, 'bbox_output': y_bbox}, epochs=10, batch_size=32)
+
+# Evaluate model
+loss, class_loss, bbox_loss, class_acc = model.evaluate(X_test,
+                                                        {'class_output': y_class_test, 'bbox_output': y_bbox_test})
+print(f"\nClassification Accuracy: {class_acc:.2f}")
+
+
+# Show predictions
+def show_prediction(index):
+    img = X_test[index].reshape(64, 64)
+    pred_class, pred_bbox = model.predict(X_test[index].reshape(1, 64, 64, 1))
+    x, y, w, h = pred_bbox[0] * 64
+
+    plt.imshow(img, cmap='gray')
+    if pred_class > 0.5:
+        rect = plt.Rectangle((x, y), w, h, edgecolor='red', facecolor='none', linewidth=2)
+        plt.gca().add_patch(rect)
+    plt.title(f"Predicted Class: {'Object' if pred_class > 0.5 else 'None'}")
+    plt.axis('off')
+    plt.show()
+
+
+# Display 3 random test results
+for i in random.sample(range(100), 3):
+    show_prediction(i)
