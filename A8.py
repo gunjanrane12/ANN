@@ -1,86 +1,42 @@
+#Assignment 8
+
 import numpy as np
 
-class ART1:
-    def __init__(self, input_size, num_categories, vigilance=0.8):
-        self.input_size = input_size
-        self.num_categories = num_categories
-        self.vigilance = vigilance
-        self.wf = np.ones((num_categories, input_size))  # Feedforward weights
-        self.wb = np.ones((num_categories, input_size))  # Feedback weights
-        self.categories_learned = [False] * num_categories
+# Parameters
+vigilance = 0.8
 
-    def train(self, inputs):
-        for input_vector in inputs:
-            input_vector = np.array(input_vector)
-            print(f"\nInput: {input_vector}")
-            matched = False
+# Input patterns (binary)
+patterns = [
+    np.array([1, 0, 0, 1]),
+    np.array([1, 1, 0, 1]),
+    np.array([0, 0, 1, 0]),
+    np.array([0, 0, 1, 1])
+]
 
-            for j in range(self.num_categories):
-                if not self.categories_learned[j]:
-                    continue
+# Store categories
+categories = []
 
-                # Calculate match score (dot product)
-                yj = np.sum(np.minimum(input_vector, self.wf[j]))
+def match_category(input_pattern, category):
+    # Check match score (overlap)
+    match = np.sum(np.logical_and(input_pattern, category)) / np.sum(input_pattern)
+    return match >= vigilance
 
-                norm_input = np.sum(input_vector)
-                if norm_input == 0:
-                    similarity = 0
-                else:
-                    similarity = yj / norm_input
+def train_art(patterns):
+    for p in patterns:
+        matched = False
+        for i, cat in enumerate(categories):
+            if match_category(p, cat):
+                # Update existing category (AND rule)
+                categories[i] = np.logical_and(categories[i], p)
+                matched = True
+                break
+        if not matched:
+            categories.append(p.copy())
 
-                if similarity >= self.vigilance:
-                    print(f"Matched category {j} with similarity {similarity:.2f}")
-                    self.update_weights(j, input_vector)
-                    matched = True
-                    break
-                else:
-                    print(f"Category {j} failed vigilance test: {similarity:.2f}")
+# Train ART network
+train_art(patterns)
 
-            if not matched:
-                # Find an unused category
-                for j in range(self.num_categories):
-                    if not self.categories_learned[j]:
-                        print(f"No match found. Learning new category {j}.")
-                        self.wf[j] = input_vector.copy()
-                        self.wb[j] = input_vector.copy()
-                        self.categories_learned[j] = True
-                        break
-
-    def update_weights(self, category, input_vector):
-        # Update weights using intersection (logical AND)
-        self.wf[category] = np.minimum(self.wf[category], input_vector)
-        self.wb[category] = np.minimum(self.wb[category], input_vector)
-
-    def predict(self, input_vector):
-        input_vector = np.array(input_vector)
-        for j in range(self.num_categories):
-            if not self.categories_learned[j]:
-                continue
-            yj = np.sum(np.minimum(input_vector, self.wf[j]))
-            norm_input = np.sum(input_vector)
-            if norm_input == 0:
-                similarity = 0
-            else:
-                similarity = yj / norm_input
-
-            if similarity >= self.vigilance:
-                return j
-        return -1  # No match found
-
-# Example usage
-if __name__ == "__main__":
-    data = [
-        [1, 0, 0, 1, 1],
-        [1, 1, 0, 1, 1],
-        [0, 1, 1, 0, 0],
-        [0, 1, 1, 0, 1],
-    ]
-
-    art = ART1(input_size=5, num_categories=5, vigilance=0.75)
-    art.train(data)
-
-    # Test predictions
-    test = [0, 1, 1, 0, 1]
-    predicted_cat = art.predict(test)
-    print(f"\nTest pattern {test} predicted category: {predicted_cat}")
-
+# Output the result
+print("Formed categories:")
+for i, c in enumerate(categories):
+    print(f"Category {i+1}: {c.astype(int)}")
