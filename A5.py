@@ -1,3 +1,5 @@
+"""Write a python Program for Bidirectional Associative Memory with two pairs of vectors. """
+
 #Assignment 5
 
 import numpy as np
