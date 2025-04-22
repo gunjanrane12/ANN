@@ -1,64 +1,46 @@
+#Assignment 7
+
 import numpy as np
 
-# Sigmoid activation and its derivative
+# Activation function and its derivative
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
-
-def sigmoid_derivative(x):
+def sigmoid_deriv(x):
     return x * (1 - x)
 
-# Training data (XOR problem as an example)
-X = np.array([[0,0],
-              [0,1],
-              [1,0],
-              [1,1]])
+# XOR input and output (binary)
+X = np.array([[0,0], [0,1], [1,0], [1,1]])
+y = np.array([[0], [1], [1], [0]])
 
-y = np.array([[0],
-              [1],
-              [1],
-              [0]])
+# Initialize weights and biases
+np.random.seed(0)
+w1 = np.random.rand(2, 2)
+b1 = np.zeros((1, 2))
+w2 = np.random.rand(2, 1)
+b2 = np.zeros((1, 1))
 
-# Initialize weights and biases randomly
-np.random.seed(42)
-input_layer_neurons = X.shape[1]   # 2
-hidden_layer_neurons = 4
-output_neurons = 1
+# Training loop
+for epoch in range(10000):
+    # Forward pass
+    z1 = np.dot(X, w1) + b1
+    a1 = sigmoid(z1)
+    z2 = np.dot(a1, w2) + b2
+    a2 = sigmoid(z2)
 
-# Weights
-wh = np.random.uniform(size=(input_layer_neurons, hidden_layer_neurons))
-bh = np.random.uniform(size=(1, hidden_layer_neurons))
-wo = np.random.uniform(size=(hidden_layer_neurons, output_neurons))
-bo = np.random.uniform(size=(1, output_neurons))
+    # Backward pass
+    error = y - a2
+    d_output = error * sigmoid_deriv(a2)
+    d_hidden = d_output.dot(w2.T) * sigmoid_deriv(a1)
 
-# Training the ANN
-epochs = 10000
-learning_rate = 0.1
+    # Update weights and biases
+    w2 += a1.T.dot(d_output) * 0.1
+    b2 += np.sum(d_output) * 0.1
+    w1 += X.T.dot(d_hidden) * 0.1
+    b1 += np.sum(d_hidden) * 0.1
+    
+    if epoch % 1000 == 0: 
+        print(f"Epoch {epoch}, Error: {np.mean(np.abs(error))}") 
 
-for epoch in range(epochs):
-    # FORWARD PROPAGATION
-    hidden_input = np.dot(X, wh) + bh
-    hidden_output = sigmoid(hidden_input)
-
-    final_input = np.dot(hidden_output, wo) + bo
-    predicted_output = sigmoid(final_input)
-
-    # BACK PROPAGATION
-    error = y - predicted_output
-    d_predicted_output = error * sigmoid_derivative(predicted_output)
-
-    error_hidden_layer = d_predicted_output.dot(wo.T)
-    d_hidden_layer = error_hidden_layer * sigmoid_derivative(hidden_output)
-
-    # Updating Weights and Biases
-    wo += hidden_output.T.dot(d_predicted_output) * learning_rate
-    bo += np.sum(d_predicted_output, axis=0, keepdims=True) * learning_rate
-    wh += X.T.dot(d_hidden_layer) * learning_rate
-    bh += np.sum(d_hidden_layer, axis=0, keepdims=True) * learning_rate
-
-    # Optional: Print error every 1000 iterations
-    if epoch % 1000 == 0:
-        print(f"Epoch {epoch} - Error: {np.mean(np.abs(error))}")
-
-# Final Output
-print("\nFinal predicted output:")
-print(predicted_output)
+# Test output
+print("Final output after training:")
+print(np.round(a2, 3))
