@@ -1,3 +1,6 @@
+"""Implement Artificial Neural Network training process in Python by using Forward Propagation, 
+Back Propagation. """
+
 import numpy as np
 
 # Sigmoid activation and its derivative
