@@ -1,3 +1,6 @@
+"""Write Python program to implement CNN object detection. Discuss numerous performance 
+evaluation metrics for evaluating the object detecting algorithms' performance."""
+
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras import layers, models
