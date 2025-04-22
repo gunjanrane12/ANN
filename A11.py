@@ -1,3 +1,6 @@
+"""How to Train a Neural Network with TensorFlow/Pytorch and evaluation of logistic regression 
+using tensorflow """
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
