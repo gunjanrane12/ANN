@@ -1,3 +1,5 @@
+"""Generate ANDNOT function using McCulloch-Pitts neural net by a python  program. """
+
 def mcculloch_pitts_andnot(x1, x2):
     weights = [1, -1]
     threshold = 1
