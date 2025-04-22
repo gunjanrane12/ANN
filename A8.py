@@ -1,3 +1,5 @@
+"""Write a python program to illustrate ART neural network."""
+
 #Assignment 8
 
 import numpy as np
