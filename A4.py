@@ -1,3 +1,7 @@
+"""With a suitable example demonstrate the perceptron learning law with its decision regions using 
+python. Give the output in graphical form. """
+
+
 import numpy as np
 import matplotlib.pyplot as plt
 
