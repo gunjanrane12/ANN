@@ -1,3 +1,6 @@
+"""Write a python program to show Back Propagation Network for XOR function with Binary Input 
+and Output """
+
 #Assignment 7
 
 import numpy as np
