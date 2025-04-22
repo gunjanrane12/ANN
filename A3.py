@@ -1,34 +1,10 @@
 import numpy as np
-#from sklearn.linear_model import Perceptron
-class Perceptron:
-    def __init__(self, input_size, learning_rate=0.1, epochs=10):
-        self.weights = np.zeros(input_size + 1)  # Include bias
-        self.learning_rate = learning_rate
-        self.epochs = epochs
+from sklearn.linear_model import Perceptron
 
-    def activation(self, x):
-        """ReLU actiation function"""
-        return 1 if x >= 0 else 0
-
-    def predict(self, x):
-        x = np.insert(x, 0, 1)  # Add bias term
-        return self.activation(np.dot(self.weights, x))
-
-    def fit(self, X, y):
-        for _ in range(self.epochs):
-            for xi, target in zip(X, y):
-                xi = np.insert(xi, 0, 1)  # Add bias term
-                prediction = self.activation(np.dot(self.weights, xi))
-                self.weights += self.learning_rate * (target - prediction) * xi
 
 def ascii_to_binary_vector(char):
     """Convert ASCII representation of a digit (0-9) into a binary vector."""
-    if len(char) == 1:
-        binary_str = format(ord(char), '064b')  # Convert ASCII to 8-bit binary
-    
-    elif len(char) >= 1:
-        binary_str = format(ord(char[-1]), '064b')
-
+    binary_str = format(ord(char), '08b')  # Convert ASCII to 8-bit binary
     return np.array([int(bit) for bit in binary_str])
 
 def generate_training_data():
@@ -43,17 +19,15 @@ def main():
     X_train, y_train = generate_training_data()
     
     # Initialize and train Perceptron
-    perceptron = Perceptron(input_size=64, learning_rate=0.1, epochs=1000)
+    perceptron = Perceptron(max_iter=1000, tol=1e-3, random_state=42)
     perceptron.fit(X_train, y_train)
     
     # Test the perceptron
-    test_digits = [str(i) for i in range(60,90)]
+    test_digits = [str(i) for i in range(10)]
     for digit in test_digits:
-        binary_vector = ascii_to_binary_vector(digit)
+        binary_vector = ascii_to_binary_vector(digit).reshape(1, -1)
         prediction = perceptron.predict(binary_vector)
-        print(f"Digit: {digit}, Predicted: {'Odd' if prediction else 'Even'}")
-
+        print(f"Digit: {digit}, Predicted: {'Odd' if prediction[0] else 'Even'}")
 
 if __name__ == "__main__":
     main()
-
