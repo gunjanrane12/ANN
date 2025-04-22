@@ -1,32 +1,23 @@
+#Assignment 5
+
 import numpy as np
 
-class BAM:
-    def __init__(self, input_size, output_size):
-        self.input_size = input_size
-        self.output_size = output_size
-        
-        self.weights = np.zeros((input_size, output_size))
+# Define bipolar input-output pairs
+X = np.array([[1, -1, 1], [-1, 1, -1]])   # 2 input vectors (3 elements)
+Y = np.array([[1, 1], [-1, -1]])          # 2 output vectors (2 elements)
 
-    def train(self, input_vectors, output_vectors):
-        for x, y in zip(input_vectors, output_vectors):
-            self.weights += np.outer(x, y)
+# Calculate weight matrix (Hebbian learning)
+W = X.T @ Y
 
-    def recall_output(self, input_vector):
-        return np.sign(np.dot(input_vector, self.weights))
+# Test BAM recall
+def recall_bam(x_input):
+    y = np.sign(x_input @ W)
+    x_recalled = np.sign(y @ W.T)
+    return y, x_recalled
 
-    def recall_input(self, output_vector):
-        return np.sign(np.dot(output_vector, self.weights.T))
-
-
-input_vectors = np.array([[1, 1], [-1, 1]])
-output_vectors = np.array([[1, -1], [1, 1]])
-
-bam = BAM(input_size=2, output_size=2)
-
-bam.train(input_vectors, output_vectors)
-
-print("Recall output for input [1, 1]:", bam.recall_output([1, 1]))  
-print("Recall output for input [-1, 1]:", bam.recall_output([-1, 1]))  
-
-print("Recall input for output [1, -1]:", bam.recall_input([1, -1]))  
-print("Recall input for output [1, 1]:", bam.recall_input([1, 1]))    
+# Try recalling both patterns
+for i in range(len(X)):
+    print(f"\nInput X: {X[i]}")
+    y_out, x_recalled = recall_bam(X[i])
+    print(f"Recalled Y: {y_out}")
+    print(f"Recalled X: {x_recalled}")
