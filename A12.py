@@ -1,54 +1,40 @@
 """TensorFlow/Pytorch implementation of CNN"""
+"""TensorFlow/Pytorch implementation of CNN"""
 
 
-import torch
-import torch.nn as nn
-import torch.optim as optim
-from torchvision import datasets, transforms
-from torch.utils.data import DataLoader
+import tensorflow as tf
+from tensorflow.keras import layers, models
+from tensorflow.keras.datasets import mnist
+from tensorflow.keras.utils import to_categorical
 
-# Transform
-transform = transforms.Compose([
-    transforms.ToTensor(),
-    transforms.Normalize((0.5,), (0.5,))
+# Load MNIST dataset
+(train_images, train_labels), (test_images, test_labels) = mnist.load_data()
+
+# Reshape the images to (28, 28, 1) for grayscale and normalize the images
+train_images = train_images.reshape((train_images.shape[0], 28, 28, 1)).astype('float32') / 255.0
+test_images = test_images.reshape((test_images.shape[0], 28, 28, 1)).astype('float32') / 255.0
+
+# One-hot encode the labels
+train_labels = to_categorical(train_labels, 10)
+test_labels = to_categorical(test_labels, 10)
+
+# Define CNN model
+model = models.Sequential([
+    layers.Conv2D(8, (3, 3), activation='relu', input_shape=(28, 28, 1)),
+    layers.MaxPooling2D((2, 2)),
+    layers.Flatten(),
+    layers.Dense(8, activation='relu'),
+    layers.Dense(10, activation='softmax')
 ])
 
-# Load MNIST
-train_dataset = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
-test_dataset = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
+# Compile the model
+model.compile(optimizer='adam',
+              loss='categorical_crossentropy',
+              metrics=['accuracy'])
 
-train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
-test_loader = DataLoader(test_dataset, batch_size=64)
+# Train the model
+model.fit(train_images, train_labels, epochs=5, batch_size=64)
 
-# Define CNN
-class CNN(nn.Module):
-    def __init__(self):
-        super(CNN, self).__init__()
-        self.conv1 = nn.Conv2d(1, 32, 3)
-        self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(32, 64, 3)
-        self.fc1 = nn.Linear(64 * 5 * 5, 64)
-        self.fc2 = nn.Linear(64, 10)
-
-    def forward(self, x):
-        x = self.pool(torch.relu(self.conv1(x)))
-        x = self.pool(torch.relu(self.conv2(x)))
-        x = x.view(-1, 64 * 5 * 5)
-        x = torch.relu(self.fc1(x))
-        x = self.fc2(x)
-        return x
-
-# Model, loss, optimizer
-model = CNN()
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=0.001)
-
-# Training loop
-for epoch in range(5):
-    for images, labels in train_loader:
-        optimizer.zero_grad()
-        output = model(images)
-        loss = criterion(output, labels)
-        loss.backward()
-        optimizer.step()
-    print(f"Epoch {epoch+1}, Loss: {loss.item():.4f}")
+# Evaluate the model
+test_loss, test_acc = model.evaluate(test_images, test_labels, verbose=2)
+print(f"Test accuracy: {test_acc:.4f}")
