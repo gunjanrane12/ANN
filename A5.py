@@ -9,7 +9,7 @@ X = np.array([[1, -1, 1], [-1, 1, -1]])   # 2 input vectors (3 elements)
 Y = np.array([[1, 1], [-1, -1]])          # 2 output vectors (2 elements)
 
 # Calculate weight matrix (Hebbian learning)
-W = X.T @ Y
+W = X.T @ Y  # W = ∑{  X[i](transpose) × Y  }
 
 # Test BAM recall
 def recall_bam(x_input):
