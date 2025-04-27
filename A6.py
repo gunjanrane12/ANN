@@ -52,11 +52,9 @@ for epoch in range (epochs):
 
     if epoch % 1000 ==0 :
         print( f"Error for epoch = {epoch} is {np.mean(error)}")
-#Forward Propagation # hid_imput is X
-hid_sum=np.dot(X,wh)+bh
-hid_output = sigmoid(hid_sum)  # output layer input
 
-final_input = np.dot(hid_output,wo)+bh
+
+print(f"Final Prediction :{final_output}")
 final_output= sigmoid(final_input)      
 
 print(final_output)
