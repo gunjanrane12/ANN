@@ -54,7 +54,7 @@ for epoch in range (epochs):
 hid_sum=np.dot(X,wh)+bh
 hid_output = sigmoid(hid_sum)  # output layer input
 
-final_sum = np.dot(hid_output,wo)+bh
+final_input = np.dot(hid_output,wo)+bh
 final_output= sigmoid(final_input)      
 
 print(final_output)
