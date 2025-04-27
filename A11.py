@@ -1,62 +1,58 @@
-"""How to Train a Neural Network with TensorFlow/Pytorch and evaluation of logistic regression 
+"""How to Train a Neural Network with TensorFlow/Pytorch and evaluation of logistic regression
 using tensorflow """
 
-import torch
-import torch.nn as nn
-import torch.optim as optim
-from torchvision import datasets, transforms
-from torch.utils.data import DataLoader
+import tensorflow as tf
+from tensorflow.keras import layers, models
+from tensorflow.keras.datasets import mnist
 
 # 1️ Data Preprocessing
-transform = transforms.Compose([
-    transforms.ToTensor(),
-    transforms.Normalize((0.5,), (0.5,))
+(X_train, y_train), (X_test, y_test) = mnist.load_data()
+
+# Normalize the data to range [0, 1]
+X_train, X_test = X_train / 255.0, X_test / 255.0
+
+# Flatten the images to 1D arrays (28 * 28 = 784)
+X_train = X_train.reshape(-1, 28*28)
+X_test = X_test.reshape(-1, 28*28)
+
+# 2️ Logistic Regression Model (as a simple neural network with one layer)
+model_lr = models.Sequential([
+    layers.InputLayer(input_shape=(28*28,)),  # Input layer for 784 features
+    layers.Dense(10, activation='softmax')  # Output layer with 10 classes for digits 0-9
 ])
 
-train_dataset = datasets.MNIST(root='./data', train=True, transform=transform, download=True)
-test_dataset = datasets.MNIST(root='./data', train=False, transform=transform, download=True)
+# 3️ Neural Network Model (with hidden layers)
+model_nn = models.Sequential([
+    layers.InputLayer(input_shape=(28*28,)),  # Input layer for 784 features
+    layers.Dense(128, activation='relu'),  # Hidden layer with 128 neurons and ReLU activation
+    layers.Dense(64, activation='relu'),   # Another hidden layer with 64 neurons
+    layers.Dense(10, activation='softmax')  # Output layer with 10 classes for digits 0-9
+])
 
-train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
-test_loader = DataLoader(test_dataset, batch_size=64)
+# 4️ Compile Logistic Regression Model
+model_lr.compile(optimizer='sgd',  # SGD (Stochastic Gradient Descent) optimizer for logistic regression
+                 loss='sparse_categorical_crossentropy',  # Sparse because labels are integers
+                 metrics=['accuracy'])
 
-# 2️ Logistic Regression Model
-class LogisticRegressionModel(nn.Module):
-    def __init__(self):
-        super(LogisticRegressionModel, self).__init__()
-        self.linear = nn.Linear(28*28, 10)  # Input size = 784, Output = 10 classes
+# 5️ Compile Neural Network Model
+model_nn.compile(optimizer='adam',  # Adam optimizer is widely used for neural networks
+                 loss='sparse_categorical_crossentropy',  # Sparse categorical cross-entropy for integer labels
+                 metrics=['accuracy'])
 
-    def forward(self, x):
-        x = x.view(-1, 28*28)  # Flatten the image
-        return self.linear(x)
+# 6️ Train Logistic Regression Model
+print("Training Logistic Regression Model...")
+model_lr.fit(X_train, y_train, epochs=5, batch_size=64)
 
-model = LogisticRegressionModel()
+# 7️ Train Neural Network Model
+print("\nTraining Neural Network Model...")
+model_nn.fit(X_train, y_train, epochs=5, batch_size=64)
 
-# 3️ Loss and Optimizer
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.SGD(model.parameters(), lr=0.01)
+# 8️ Evaluate Logistic Regression Model on Test Data
+print("\nEvaluating Logistic Regression Model on Test Data...")
+test_loss_lr, test_acc_lr = model_lr.evaluate(X_test, y_test)
+print(f"Test Accuracy of Logistic Regression: {test_acc_lr * 100:.2f}%")
 
-# 4️ Training Loop
-for epoch in range(5):
-    running_loss = 0.0
-    for images, labels in train_loader:
-        optimizer.zero_grad()
-        outputs = model(images)
-        loss = criterion(outputs, labels)
-        loss.backward()
-        optimizer.step()
-        running_loss += loss.item()
-
-    print(f"Epoch {epoch+1}, Loss: {running_loss / len(train_loader):.4f}")
-
-# 5️ Evaluation on Test Set
-correct = 0
-total = 0
-with torch.no_grad():
-    for images, labels in test_loader:
-        outputs = model(images)
-        _, predicted = torch.max(outputs.data, 1)
-        total += labels.size(0)
-        correct += (predicted == labels).sum().item()
-
-accuracy = 100 * correct / total
-print(f"Test Accuracy: {accuracy:.2f}%")
+# 9️ Evaluate Neural Network Model on Test Data
+print("\nEvaluating Neural Network Model on Test Data...")
+test_loss_nn, test_acc_nn = model_nn.evaluate(X_test, y_test)
+print(f"Test Accuracy of Neural Network: {test_acc_nn * 100:.2f}%")
