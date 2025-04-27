@@ -1,77 +1,57 @@
 """Write a python program in python program for creating a Back Propagation Feed-forward neural 
 network"""
 
-import numpy as np
+import numpy as np 
 
-# Activation function: Sigmoid and its derivative
 def sigmoid(x):
-    return 1 / (1 + np.exp(-x))
+    return (1 / (1 + np.exp(-x)))
 
-def sigmoid_derivative(x):
+def sigmoid_derv(x):
     return x * (1 - x)
 
-# Input dataset (XOR logic gate)
-X = np.array([[0, 0],
-              [0, 1],
-              [1, 0],
-              [1, 1]])
 
-# Output dataset
-y = np.array([[0],
-              [1],
-              [1],
-              [0]])
+#XOR
+X=np.array([[0,0],[0,1],[1,0],[1,1]])
+y=np.array([[0],[1],[1],[0]])
 
-# Set random seed for reproducibility
-np.random.seed(42)
+input_layer=X.shape[1]
+hidden_layer= 4
+out_layer=1
 
-# Neural Network Architecture
-input_layer_neurons = X.shape[1]    # 2 input neurons
-hidden_layer_neurons = 2            # You can adjust this
-output_neurons = 1                  # 1 output neuron
+wh=np.random.uniform(size=(input_layer , hidden_layer))
+bh=np.random.uniform(size=(1,hidden_layer))
 
-# Initialize weights and biases
-weights_input_hidden = np.random.uniform(size=(input_layer_neurons, hidden_layer_neurons))
-bias_hidden = np.random.uniform(size=(1, hidden_layer_neurons))
-weights_hidden_output = np.random.uniform(size=(hidden_layer_neurons, output_neurons))
-bias_output = np.random.uniform(size=(1, output_neurons))
+wo=np.random.uniform(size=(hidden_layer,out_layer))
+bo=np.random.uniform(size=(1,out_layer))
 
-# Training parameters
-learning_rate = 0.1
-epochs = 10000
+epochs = 1
+lr=0.01
 
-# Training loop
-for epoch in range(epochs):
-    # -------- FORWARD PROPAGATION --------
-    hidden_input = np.dot(X, weights_input_hidden) + bias_hidden
-    hidden_output = sigmoid(hidden_input)
 
-    final_input = np.dot(hidden_output, weights_hidden_output) + bias_output
-    predicted_output = sigmoid(final_input)
+for epoch in range (epochs):
+    #Forward Propagation # hid_input is X
+    hid_sum=np.dot(X,wh)+bh
+    hid_output = sigmoid(hid_sum)  # output layer input
 
-    # -------- BACKPROPAGATION --------
-    # Error in output
-    error = y - predicted_output
+    final_sum = np.dot(hid_output,wo)+bo
+    final_output= sigmoid(final_sum)
 
-    # Gradient for output layer
-    d_output = error * sigmoid_derivative(predicted_output)
+    #Backward Propagation
+    error_out = y - final_output
+    delta_out = error_out * sigmoid_derv(final_output)
 
-    # Error for hidden layer
-    error_hidden = d_output.dot(weights_hidden_output.T)
-    d_hidden = error_hidden * sigmoid_derivative(hidden_output)
+    # error_hid = delta_output.dot(wo.T)
+    error_hid = delta_out @ wo.T
+    delta_hid = error_hid * sigmoid_derv(hid_output)
 
-    # -------- WEIGHT AND BIAS UPDATES --------
-    weights_hidden_output += hidden_output.T.dot(d_output) * learning_rate
-    bias_output += np.sum(d_output, axis=0, keepdims=True) * learning_rate
+    wh += lr * X.T @ delta_hid
+    bh+= np.sum(delta_hid, axis=0) * lr
 
-    weights_input_hidden += X.T.dot(d_hidden) * learning_rate
-    bias_hidden += np.sum(d_hidden, axis=0, keepdims=True) * learning_rate
+    # wo+= lr + delta_output @ hid_output 
+    w0 = lr * hid_output.T @ delta_out
+    bo+= np.sum(delta_out ,axis=0)* lr
 
-    # Optional: Print error every 1000 epochs
-    if epoch % 1000 == 0:
-        loss = np.mean(np.abs(error))
-        print(f"Epoch {epoch} - Loss: {loss:.4f}")
+    if epoch % 1000 ==0 :
+        print( f"Error for epoch = {epoch} is {np.mean(error)}")
 
-# -------- FINAL OUTPUT --------
-print("\nFinal predictions after training:")
-print(predicted_output.round(3))
+print(f"Final Prediction :{final_output}")
