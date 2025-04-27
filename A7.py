@@ -1,49 +1,63 @@
 """Write a python program to show Back Propagation Network for XOR function with Binary Input 
 and Output """
 
-#Assignment 7
+import numpy as np 
 
-import numpy as np
-
-# Activation function and its derivative
 def sigmoid(x):
-    return 1 / (1 + np.exp(-x))
-def sigmoid_deriv(x):
+    return (1 / (1 + np.exp(-x)))
+
+def sigmoid_derv(x):
     return x * (1 - x)
 
-# XOR input and output (binary)
-X = np.array([[0,0], [0,1], [1,0], [1,1]])
-y = np.array([[0], [1], [1], [0]])
 
-# Initialize weights and biases
-np.random.seed(0)
-w1 = np.random.rand(2, 2)
-b1 = np.zeros((1, 2))
-w2 = np.random.rand(2, 1)
-b2 = np.zeros((1, 1))
+#XOR
+X=np.array([[0,0],[0,1],[1,0],[1,1]])
+y=np.array([[0],[1],[1],[0]])
 
-# Training loop
-for epoch in range(10000):
-    # Forward pass
-    z1 = np.dot(X, w1) + b1
-    a1 = sigmoid(z1)
-    z2 = np.dot(a1, w2) + b2
-    a2 = sigmoid(z2)
+input_layer=X.shape[1]
+hidden_layer= 4
+out_layer=1
 
-    # Backward pass
-    error = y - a2
-    d_output = error * sigmoid_deriv(a2)
-    d_hidden = d_output.dot(w2.T) * sigmoid_deriv(a1)
+wh=np.random.uniform(size=(input_layer , hidden_layer))
+bh=np.random.uniform(size=(1,hidden_layer))
 
-    # Update weights and biases
-    w2 += a1.T.dot(d_output) * 0.1
-    b2 += np.sum(d_output) * 0.1
-    w1 += X.T.dot(d_hidden) * 0.1
-    b1 += np.sum(d_hidden) * 0.1
-    
-    if epoch % 1000 == 0: 
-        print(f"Epoch {epoch}, Error: {np.mean(np.abs(error))}") 
+wo=np.random.uniform(size=(hidden_layer,out_layer))
+bo=np.random.uniform(size=(1,out_layer))
 
-# Test output
-print("Final output after training:")
-print(np.round(a2, 3))
+epochs = 1
+lr=0.01
+
+
+for epoch in range (epochs):
+    #Forward Propagation # hid_input is X
+    hid_sum=np.dot(X,wh)+bh
+    hid_output = sigmoid(hid_sum)  # output layer input
+
+    final_sum = np.dot(hid_output,wo)+bo
+    final_output= sigmoid(final_sum)
+
+    #Backward Propagation
+    error_out = y - final_output
+    delta_out = error_out * sigmoid_derv(final_output)
+
+    # error_hid = delta_output.dot(wo.T)
+    error_hid = delta_out @ wo.T
+    delta_hid = error_hid * sigmoid_derv(hid_output)
+
+    wh += lr * X.T @ delta_hid
+    bh+= np.sum(delta_hid, axis=0) * lr
+
+    # wo+= lr + delta_output @ hid_output 
+    w0 = lr * hid_output.T @ delta_out
+    bo+= np.sum(delta_out ,axis=0)* lr
+
+    if epoch % 1000 ==0 :
+        print( f"Error for epoch = {epoch} is {np.mean(error)}")
+#Forward Propagation # hid_imput is X
+hid_sum=np.dot(X,wh)+bh
+hid_output = sigmoid(hid_sum)  # output layer input
+
+final_input = np.dot(hid_output,wo)+bh
+final_output= sigmoid(final_input)      
+
+print(final_output)
