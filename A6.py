@@ -47,7 +47,7 @@ for epoch in range (epochs):
     bh+= np.sum(delta_hid, axis=0) * lr
 
     # wo+= lr + delta_output @ hid_output 
-    w0 = lr * hid_output.T @ delta_out
+    wo = lr * hid_output.T @ delta_out
     bo+= np.sum(delta_out ,axis=0)* lr
 
     if epoch % 1000 ==0 :
